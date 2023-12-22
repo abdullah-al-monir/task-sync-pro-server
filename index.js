@@ -1,8 +1,7 @@
 const express = require("express");
 const cors = require("cors");
-const jwt = require("jsonwebtoken");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const app = express();
 const port = process.env.PORT || 7000;
@@ -10,7 +9,7 @@ const port = process.env.PORT || 7000;
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173", "https://task-sync-pro-401d7.web.app"],
   })
 );
 
@@ -42,6 +41,26 @@ async function run() {
       const status = req.query.status;
       const query = { email: email, status: status };
       const result = await taskCollection.find(query).toArray();
+      res.send(result);
+    });
+    // to change task status
+    app.patch("/update/:id", async (req, res) => {
+      const id = req.params.id;
+      const { status } = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const update = {
+        $set: {
+          status: status,
+        },
+      };
+      const result = await taskCollection.updateOne(filter, update);
+      res.send(result);
+    });
+    // to delete a task
+    app.delete("/delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await taskCollection.deleteOne(query);
       res.send(result);
     });
     // Send a ping to confirm a successful connection
